@@ -2,6 +2,8 @@ const https = require('https');
 const http = require('http');
 const si = require('systeminformation');
 
+const BODY_BUF_SIZE = 4096;
+
 let sendPort = process.env.PORT ?? '1880';
 let hostname = process.env.HOSTNAME;
 let route = process.env.ROUTE ?? '';
@@ -223,7 +225,10 @@ promiseArr.push(si.bluetoothDevices().then((data) => {
 
 Promise.allSettled(promiseArr).then(() => {
   const body = JSON.stringify(sendData);
-  console.log(`Sending ${body.length} bytes to (Basic Auth: ${auth ? 'true' : 'false'}):`);
+  var re = new RegExp('.{1,' + BODY_BUF_SIZE + '}', 'g');
+  const packetChunks = body.match(re);
+
+  console.log(`Sending ${body.length} bytes (${packetChunks.length} chunks) to (Basic Auth: ${auth ? 'true' : 'false'}):`);
   console.log(`  [${method}] ${useHttp ? 'http' : 'https'}://${hostname}:${sendPort}${route.startsWith("/") ? route : '/' + route}`);
 
   const options = {
@@ -253,6 +258,9 @@ Promise.allSettled(promiseArr).then(() => {
     console.error(error);
   });
 
-  req.write(body);
+  packetChunks.forEach((buf) => {
+    req.write(buf);
+  });
+
   req.end();
 });
