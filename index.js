@@ -107,7 +107,7 @@ const processCliArgs = (args) => {
       case '-http':
       case '--http': {
         try {
-          useHttp = true;
+          useHttp = args[i + 1] === 'true' ? true : false;
           continue;
         } catch (err) {
           console.error(`http '${args[i + 1]}'`);
@@ -169,8 +169,6 @@ const processCliArgs = (args) => {
   }
 };
 
-const httpExec = useHttp ? http : https;
-
 const checkCliParams = () => {
   const errorList = [];
   if (!hostname) {
@@ -199,6 +197,8 @@ const checkCliParams = () => {
 
 processCliArgs(process.argv);
 checkCliParams();
+
+const httpExec = useHttp ? http : https;
 
 let auth;
 if (username || password) {
@@ -237,20 +237,22 @@ Promise.allSettled(promiseArr).then(() => {
     }
   };
 
-  const req = httpExec.request((options, res) => {
-    console.log(JSON.stringify(sendData));
-    console.log(`statusCode: ${res.statusCode}`);
+  if (auth) {
+    options.headers['Authorization'] = `Basic ${auth}`;
+  }
+  const req = httpExec.request(options, (res) => {
+    console.log(`Response statusCode: ${res.statusCode}`);
+    // console.log(JSON.stringify(sendData));
     // res.on('data', (d) => {
     //   process.stdout.write(d);
     // });
+    process.exit(0);
   });
 
-  req.on('error', error => {
+  req.on('error', (error) => {
     console.error(error);
   });
 
   req.write(body);
   req.end();
-
-  process.exit(0);
 });
