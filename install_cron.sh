@@ -20,6 +20,10 @@ if [ -z "$NODEEXEC" ]; then
     echo ""
     echo "curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.38.0/install.sh | bash"
     curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.38.0/install.sh | bash
+    echo ""
+    source ~/.bashrc
+    nvm install v16.3.0
+    NODEEXEC=$(which node)
   else
     echo ""
     echo "Cancelling installation"
