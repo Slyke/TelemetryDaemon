@@ -224,7 +224,7 @@ promiseArr.push(si.bluetoothDevices().then((data) => {
 Promise.allSettled(promiseArr).then(() => {
   const body = JSON.stringify(sendData);
   console.log(`Sending ${body.length} bytes to (Basic Auth: ${auth ? 'true' : 'false'}):`);
-  console.log(`  [${method}] ${useHttp ? 'http' : 'https'}://${hostname}:${sendPort}${route.startsWith("/" ? route : '/' + route)}`);
+  console.log(`  [${method}] ${useHttp ? 'http' : 'https'}://${hostname}:${sendPort}${route.startsWith("/") ? route : '/' + route}`);
 
   const options = {
   hostname,
