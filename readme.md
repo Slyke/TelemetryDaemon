@@ -2,6 +2,11 @@
 
 Sends useful stats of the host to a endpoint of your choosing in JSON format.
 
+## Install
+```
+git clone https://github.com/Slyke/TelemetryDaemon.git
+```
+
 ## Notes
 * CLI params take priority over environment variables
 * `{}` = Default value
