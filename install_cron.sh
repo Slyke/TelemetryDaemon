@@ -13,6 +13,20 @@ if [[ ! -f "./.isTelemetryDaemon" ]]; then
   exit 1
 fi
 
+if [ -z "$NODEEXEC" ]; then
+  echo "NodeJS binary couldn't be found in PATH. Ensure that NodeJS is installed."
+  read -p "Install NVM (NodeJS Version Manager)? [y/N] " -n 1 -r < /dev/tty
+  if [[ $REPLY =~ ^[Yy]$ ]]; then
+    echo ""
+    echo "curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.38.0/install.sh | bash"
+    curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.38.0/install.sh | bash
+  else
+    echo ""
+    echo "Cancelling installation"
+    exit 3
+  fi
+fi
+
 crontab -l 2>/dev/null | grep -q -i "$NODEEXEC $CPWD/index.js"
 FOUND_CRON=$?
 

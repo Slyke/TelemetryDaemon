@@ -32,7 +32,11 @@ npm start --hostname "yourserver.com" --route "/telemetry"
 ```
 
 ## Cronjob
-To execute every 2 minutes: `crontab -e`
+There's a script to help facilitate NodeJS installation, and insertion into crontab, you can run it with:
+```
+bash ./install_cron.sh
+```
+To manually update crontab, and have the script execute every 2 minutes: `crontab -e`
 ```
 */2 *  *  *  * /path/to/node /home/you/TelemetryDaemon/index.js --hostname "yourserver.com" --route "/telemetry"
 ```
