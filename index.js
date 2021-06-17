@@ -245,17 +245,21 @@ Promise.allSettled(promiseArr).then(() => {
   if (auth) {
     options.headers['Authorization'] = `Basic ${auth}`;
   }
+  
   const req = httpExec.request(options, (res) => {
     console.log(`Response statusCode: ${res.statusCode}`);
     // console.log(JSON.stringify(sendData));
     // res.on('data', (d) => {
     //   process.stdout.write(d);
     // });
-    process.exit(0);
   });
 
   req.on('error', (error) => {
     console.error(error);
+  });
+
+  req.on('end', (error) => {
+    process.exit(0);
   });
 
   packetChunks.forEach((buf) => {
