@@ -59,7 +59,7 @@ echo ""
 read -p "Is this correct? [y/N] " -n 1 -r < /dev/tty
 if [[ $REPLY =~ ^[Yy]$ ]]; then
   echo ""
-  crontab -l | { cat; echo "*/59 *  *  *  * $NODEEXEC $CPWD/index.js $CLIARGS"; } | crontab -
+  crontab -l | { cat; echo "*/2 *  *  *  * $NODEEXEC $CPWD/index.js $CLIARGS"; } | crontab -
   echo "Crontab installed:"
   echo "  */2 *  *  *  *   $NODEEXEC $CPWD/index.js $CLIARGS"
   echo ""
