@@ -317,11 +317,11 @@ promiseArr.push(si.getAllData("", "").then((data) => {
   sendErrors = error;
 }));
 
-promiseArr.push(si.bluetoothDevices().then((data) => {
-  sendData['bluetoothDevices'] = data;
-}).catch((error) => {
-  sendErrors['bluetoothDevices'] = error;
-}));
+// promiseArr.push(si.bluetoothDevices().then((data) => {
+//   sendData['bluetoothDevices'] = data;
+// }).catch((error) => {
+//   sendErrors['bluetoothDevices'] = error;
+// }));
 
 Promise.allSettled(promiseArr).then(() => {
   if (outputResult) {
