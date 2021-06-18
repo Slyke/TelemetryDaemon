@@ -257,7 +257,7 @@ const httpExec = useHttp ? http : https;
 
 let auth;
 if (username || password) {
-  auth = 'Basic ' + Buffer.from(username + ':' + password).toString('base64');
+  auth = Buffer.from(username + ':' + password).toString('base64');
 }
 
 let sendData = {};
