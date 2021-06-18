@@ -1,14 +1,18 @@
 const https = require('https');
 const http = require('http');
+const { Readable } = require('stream');
 const si = require('systeminformation');
 
-const BODY_BUF_SIZE = 4096;
+const BODY_BUF_SIZE = 1024;
 
 let sendPort = process.env.PORT ?? '1880';
 let hostname = process.env.HOSTNAME;
 let route = process.env.ROUTE ?? '';
 let useHttp = process.env.HTTP === 'true' ? true : false;
 let method = process.env.METHOD ?? 'POST';
+let filterList = process.env.FILTER;
+let outputResult = process.env.OUTPUTRESULT;
+let outputResponse = process.env.OUTPUTRESPONSE;
 
 let username = process.env.USERNAME;
 let password = process.env.PASSWORD;
@@ -22,23 +26,29 @@ const printHelp = () => {
   console.log('  [] = Required value');
   console.log('');
   console.log('Usage [Environment Variables]:');
-  console.log('  * PORT           = {"1880"}    - Port of remote host');
-  console.log('  * [HOSTNAME]                   - Hostname of remote host');
-  console.log('  * ROUTE          = {""}        - Path on remote host');
-  console.log('  * HTTP           = {"false"}   - Use HTTP instead of HTTPS');
-  console.log('  * METHOD         = {"POST"}    - HTTP request method');
-  console.log('  * USERNAME       = {empty}     - Basic auth username');
-  console.log('  * PASSWORD       = {empty}     - Basic auth password');
+  console.log('  * PORT                = {"1880"}    - Port of remote host');
+  console.log('  * [HOSTNAME]                        - Hostname of remote host');
+  console.log('  * ROUTE               = {""}        - Path on remote host');
+  console.log('  * HTTP                = {"false"}   - Use HTTP instead of HTTPS');
+  console.log('  * METHOD              = {"POST"}    - HTTP request method');
+  console.log('  * USERNAME            = {empty}     - Basic auth username');
+  console.log('  * PASSWORD            = {empty}     - Basic auth password');
+  console.log('  * FILTER              = {empty}     - If set, only return these objects');
+  console.log('  * OUTPUTRESULT        = {false}     - If true, prints what is sent to server');
+  console.log('  * OUTPUTRESPONSE      = {false}     - If true, prints the server\'s reply');
   console.log('');
   console.log('Usage [CLI Params]:');
-  console.log('  * --port         = {"1880"}    - Port of remote host');
-  console.log('  * [--hostname]                 - Hostname of remote host');
-  console.log('  * --route        = {""}        - Path on remote host');
-  console.log('  * --http         = {"false"}   - Use HTTP instead of HTTPS');
-  console.log('  * --method       = {"POST"}    - HTTP request method');
-  console.log('  * --username     = {empty}     - Basic auth username');
-  console.log('  * --password     = {empty}     - Basic auth password');
-  console.log('  * -h|--help                    - Show this menu');
+  console.log('  * --port              = {"1880"}    - Port of remote host');
+  console.log('  * [--hostname]                      - Hostname of remote host');
+  console.log('  * --route             = {""}        - Path on remote host');
+  console.log('  * --http              = {"false"}   - Use HTTP instead of HTTPS');
+  console.log('  * --method            = {"POST"}    - HTTP request method');
+  console.log('  * --username          = {empty}     - Basic auth username');
+  console.log('  * --password          = {empty}     - Basic auth password');
+  console.log('  * --filter            = {empty}     - If set, only return these objects');
+  console.log('  * --output-result     = {false}     - If true, prints what is sent to server');
+  console.log('  * --output-response   = {false}     - If true, prints the server\'s reply');
+  console.log('  * -h|--help                         - Show this menu');
   console.log('');
   console.log('Example:');
   console.log('  npm start --hostname "yourserver.com" --route "/telemetry"');
@@ -67,6 +77,21 @@ const processCliArgs = (args) => {
         } catch (err) {
           console.error(`port '${args[i + 1]}'`);
           console.error('processCliArgs: Error on parseInt:');
+          console.error(err);
+          process.exit(1);
+        }
+        break;
+      }
+
+      case '-f':
+      case '--filter': {
+        try {
+          filterList = args[i + 1];
+          i++;
+          continue;
+        } catch (err) {
+          console.error(`filter '${args[i + 1]}'`);
+          console.error('processCliArgs: Error on setting filter:');
           console.error(err);
           process.exit(1);
         }
@@ -114,6 +139,34 @@ const processCliArgs = (args) => {
         } catch (err) {
           console.error(`http '${args[i + 1]}'`);
           console.error('processCliArgs: Error on setting http:');
+          console.error(err);
+          process.exit(1);
+        }
+        break;
+      }
+
+      case '-osr':
+      case '--output-response': {
+        try {
+          outputResponse = args[i + 1] === 'true' ? true : false;
+          continue;
+        } catch (err) {
+          console.error(`outputResponse '${args[i + 1]}'`);
+          console.error('processCliArgs: Error on setting outputResponse:');
+          console.error(err);
+          process.exit(1);
+        }
+        break;
+      }
+
+      case '-or':
+      case '--output-result': {
+        try {
+          outputResult = args[i + 1] === 'true' ? true : false;
+          continue;
+        } catch (err) {
+          console.error(`outputResult '${args[i + 1]}'`);
+          console.error('processCliArgs: Error on setting outputResult:');
           console.error(err);
           process.exit(1);
         }
@@ -213,6 +266,53 @@ const promiseArr = [];
 
 promiseArr.push(si.getAllData("", "").then((data) => {
   sendData = data;
+  let listOfDetails = [
+    'version',
+    'system',
+    'bios',
+    'baseboard',
+    'chassis',
+    'os',
+    'uuid',
+    'versions',
+    'cpu',
+    'graphics',
+    'net',
+    'memLayout',
+    'time',
+    'node',
+    'v8',
+    'cpuCurrentSpeed',
+    'battery',
+    'services',
+    'wifiNetworks',
+    'bluetoothDevices',
+    'currentLoad',
+    'disksIO',
+    'fsSize',
+    // 'networkConnections', // Large
+    'fsStats',
+    'networkStats',
+    'mem',
+    // 'users', // Not necessary
+    // 'processes', // Large
+    'temp',
+    'inetLatency'
+  ];
+
+  if (typeof filterList === 'string' && filterList !== '') {
+    listOfDetails = filterList.split(',').map((filterName) => {
+      return filterName.trim();
+    });
+  }
+
+  if (listOfDetails.length > 0) {
+    Object.keys(sendData).forEach((k) => {
+      if (!listOfDetails.includes(k)) {
+        delete sendData[k];
+      }
+    });
+  }
 }).catch((error) => {
   sendErrors = error;
 }));
@@ -224,7 +324,10 @@ promiseArr.push(si.bluetoothDevices().then((data) => {
 }));
 
 Promise.allSettled(promiseArr).then(() => {
-  const body = JSON.stringify(sendData);
+  if (outputResult) {
+    console.log(JSON.stringify(sendData, null, 2));
+  }
+  const body = JSON.stringify(sendData) + '    '; // Spaces are for protobuffs
   var re = new RegExp('.{1,' + BODY_BUF_SIZE + '}', 'g');
   const packetChunks = body.match(re);
 
@@ -248,23 +351,37 @@ Promise.allSettled(promiseArr).then(() => {
   
   const req = httpExec.request(options, (res) => {
     console.log(`Response statusCode: ${res.statusCode}`);
-    // console.log(JSON.stringify(sendData));
-    // res.on('data', (d) => {
-    //   process.stdout.write(d);
-    // });
+    if (outputResponse) {
+      let dBuf = '';
+      res.on('data', (data) => {
+        dBuf += data;
+      });
+
+      res.on('end', (data) => {
+        console.log(dBuf);
+      });
+    }
+  });
+
+  const stream = Readable.from(packetChunks);
+
+  stream.on('data', (data) => {
+    if (req.write(data) === false) {
+      stream.pause();
+    }
   });
 
   req.on('error', (error) => {
     console.error(error);
   });
 
-  req.on('end', (error) => {
-    process.exit(0);
+  req.on('drain', (error) => {
+    stream.resume();
   });
 
-  packetChunks.forEach((buf) => {
-    req.write(buf);
+  stream.on('end', (data) => {
+    (() => {
+      req.end();
+    })();
   });
-
-  req.end();
 });
