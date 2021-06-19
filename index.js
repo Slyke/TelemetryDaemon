@@ -317,16 +317,6 @@ promiseArr.push(si.getAllData("", "").then((data) => {
   sendErrors = error;
 }));
 
-// Calling bluetooth without sudo on some systems will cause a crash if it is not checked.
-try {
-  promiseArr.push(si.bluetoothDevices().then((data) => {
-    sendData['bluetoothDevices'] = data;
-  }).catch((error) => {
-    sendErrors['bluetoothDevices'] = error;
-  }));
-} catch {}
-
-
 Promise.allSettled(promiseArr).then(() => {
   if (outputResult) {
     console.log(JSON.stringify(sendData, null, 2));
