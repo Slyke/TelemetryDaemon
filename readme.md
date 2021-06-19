@@ -1,6 +1,6 @@
 # Telemetry Daemon
 
-Sends useful stats of the host to a endpoint of your choosing in JSON format.
+Sends useful stats of the host to an endpoint of your choosing in JSON format.
 
 ## Install
 ```

@@ -19,7 +19,7 @@ let password = process.env.PASSWORD;
 
 const printHelp = () => {
   console.log('Telemetry Daemon');
-  console.log('  Sends useful stats of this host to a endpoint of your choosing.');
+  console.log('  Sends useful stats of this host to an endpoint of your choosing.');
   console.log('');
   console.log('  CLI params take priority over environment variables');
   console.log('  {} = Default value');
