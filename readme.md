@@ -107,5 +107,8 @@ To manually update crontab, and have the script execute every 2 minutes: `cronta
 ## Docker
 You can run this inside docker, but it may not be able to get all details about the host. Pass the `--privileged` flag to Docker to allow for more details.
 
+## Example output of setup with NodeRed:
+![Example Dashboard](./example.png)
+
 ## Credit:
 This uses [SystemInformation](https://github.com/sebhildebrandt/systeminformation) which is a cross platform, dependency free npm module.

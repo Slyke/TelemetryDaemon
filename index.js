@@ -327,11 +327,13 @@ Promise.allSettled(promiseArr).then(() => {
   if (outputResult) {
     console.log(JSON.stringify(sendData, null, 2));
   }
-  const body = JSON.stringify(sendData) + '    '; // Spaces are for protobuffs
+
+  const body = JSON.stringify(sendData); // Spaces are for protobuffs
   var re = new RegExp('.{1,' + BODY_BUF_SIZE + '}', 'g');
   const packetChunks = body.match(re);
+  const contentLength = Buffer.byteLength(body);
 
-  console.log(`Sending ${body.length} bytes (${packetChunks.length} chunks) to (Basic Auth: ${auth ? 'true' : 'false'}):`);
+  console.log(`Sending ${contentLength} bytes (${packetChunks.length} chunks) to (Basic Auth: ${auth ? 'true' : 'false'}):`);
   console.log(`  [${method}] ${useHttp ? 'http' : 'https'}://${hostname}:${sendPort}${route.startsWith("/") ? route : '/' + route}`);
 
   const options = {
@@ -341,7 +343,7 @@ Promise.allSettled(promiseArr).then(() => {
   method,
   headers: {
     'Content-Type': 'application/json',
-    'Content-Length': body.length
+    'Content-Length': contentLength
     }
   };
 
